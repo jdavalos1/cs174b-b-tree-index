@@ -83,10 +83,16 @@ namespace BPTree {
     class BPTreeManager
     {
         private:
-            int _write_queue;
+            int _write_queue_size;
+            int _current_queue = 0;
             int _fanout;
-            BPTreeNode  *_root;
+            string _file_name;
+            BPTreeNode *_root;
         public:
+            BPTreeManager(int fanout = 5, int write_queue_size = 4, string fileName = "dbtree.db") : _write_queue_size(write_queue_size), _fanout(fanout), _file_name(fileName) 
+            {
+                _root = new BPTreeNode(true, fanout);
+            }
             list<pair<int, int>>* search(const int);
             void insert(pair<int, int>*);
             void serialize(string);

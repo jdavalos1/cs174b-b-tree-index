@@ -38,6 +38,14 @@ void BPTreeManager::insert(pair<int, int>* record)
     // If the value returned by newRoot is not NULL 
     // then the root was split and we have a new root
     if(newRoot != NULL) this->_root = newRoot;
+
+    this->_current_queue++;
+
+    if(_current_queue >= _write_queue_size)
+    {
+        this->serialize(_file_name);
+        _current_queue = 0;
+    }
 }
 
 /**
@@ -47,7 +55,7 @@ void BPTreeManager::insert(pair<int, int>* record)
  * Default to bptree.db
  * 
  */
-void BPTreeManager::serialize(string dbFile = "bptree.db")
+void BPTreeManager::serialize(string dbFile)
 {
     this->_root->persist(dbFile);
 }
@@ -196,7 +204,7 @@ BPTreeNode* BPTreeNode::recursive_split()
         if(this->_parent == NULL)
         {
             auto intervals = new vector<int>(secondList->front().first);
-            return new BPTreeNode(false, this->_fanout, new vector<BPTreeNode*>(this, newLeaf), intervals);
+            return new BPTreeNode(false, this->_fanout, new vector<BPTreeNode*>{this, newLeaf}, intervals);
         }
         
         // Parent exists so we can call a recursive split but before
@@ -224,7 +232,7 @@ BPTreeNode* BPTreeNode::recursive_split()
             {
                 // create new node as the parent (root)
                 return new BPTreeNode(false, this->_fanout,
-                                                new vector<BPTreeNode*>(this, newNode), new vector<int>(parentInterval));
+                                                new vector<BPTreeNode*>{this, newNode}, new vector<int>(parentInterval));
             }
             else
             {

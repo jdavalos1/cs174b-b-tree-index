@@ -17,6 +17,7 @@ namespace BPTree {
             // Private helper functions
             BPTreeNode* recursive_split();
             
+            
         public:
             /**
              * @brief Construct a new BPTreeNode object. This constructor can be used
@@ -42,6 +43,14 @@ namespace BPTree {
                 _neighbor = NULL;
             }
 
+            /**
+             * @brief Construct a new BPTreeNode object
+             * 
+             * @param isLeaf Determine if node is a leaf
+             * @param fanout Fanout of node
+             * @param children List of children of node
+             * @param intervals List of intervals used to traverse tree
+             */
             BPTreeNode(bool isLeaf, int fanout, vector<BPTreeNode*> *children, vector<int> *intervals) : _isLeaf(isLeaf), _fanout(fanout), _intervals(intervals)
             {
                 _children = children;
@@ -68,16 +77,18 @@ namespace BPTree {
 
             // Public helper functions
             void add_child(int, BPTreeNode*);
+            void persist(string);
     };
     
     class BPTreeManager
     {
         private:
-            int fanout;
-            BPTreeNode *root;
+            int _write_queue;
+            int _fanout;
+            BPTreeNode  *_root;
         public:
             list<pair<int, int>>* search(const int);
             void insert(pair<int, int>*);
-            void serialize();
+            void serialize(string);
     };
 }

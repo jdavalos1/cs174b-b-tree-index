@@ -1,4 +1,7 @@
+#include <iostream>
+#include <fstream>
 #include "BPlusTreeNode.h"
+
 using namespace BPTree;
 
 
@@ -12,7 +15,7 @@ using namespace BPTree;
  */
 list<pair<int, int>>* BPTreeManager::search(const int data)
 {
-    return root == NULL ? NULL : root->recursive_search(data);
+    return this->_root == NULL ? NULL : this->_root->recursive_search(data);
 }
 
 /**
@@ -25,16 +28,28 @@ void BPTreeManager::insert(pair<int, int>* record)
 {
     // If the root is null then we need to create
     // a new root
-    if(root == NULL)
+    if(this->_root == NULL)
     {
-        root = new BPTreeNode(true, fanout);
+        this->_root = new BPTreeNode(true, this->_fanout);
     }
     // Call recursive insert on the new data record
-    BPTreeNode* newRoot = root->recursive_insert(record);
+    BPTreeNode* newRoot = this->_root->recursive_insert(record);
     
     // If the value returned by newRoot is not NULL 
     // then the root was split and we have a new root
-    if(newRoot != NULL) root = newRoot;
+    if(newRoot != NULL) this->_root = newRoot;
+}
+
+/**
+ * @brief Write out the tree to a file
+ * 
+ * @param dbFile Database file name.
+ * Default to bptree.db
+ * 
+ */
+void BPTreeManager::serialize(string dbFile = "bptree.db")
+{
+    this->_root->persist(dbFile);
 }
 
 /**
@@ -151,6 +166,7 @@ BPTreeNode* BPTreeNode::recursive_insert(const pair<int, int>* data_record)
         return this->_children->at(i)->recursive_insert(data_record);
     }
 }
+
 /**
  * @brief Recursively splits the tree at every node
  * until a node no longer needs to split.
@@ -243,4 +259,31 @@ void BPTreeNode::add_child(int leftmostValue, BPTreeNode* child)
     }
     this->_intervals->insert(this->_intervals->begin() + i, leftmostValue);
     this->_children->insert(this->_children->begin() + (i + 1), child);
+}
+
+/**
+ * @brief Saves all pages to a file named bptree.db
+ * 
+ */
+void BPTreeNode::persist(string dbFile)
+{
+    auto currentNode = this;
+    // Get the leftmost node so that we traverse through
+    // every page's neighbors to get the data records
+    // without traversing the tree
+    while(!currentNode->_isLeaf) currentNode->_children->at(0);
+
+    ofstream file(dbFile);
+    if(file.is_open())
+    {
+        while(currentNode != NULL)
+        {
+            for(auto it = currentNode->_data->begin(); it != currentNode->_data->end(); it++)
+            {
+                file << it->first << "," << it->second << "\n";
+            }
+            currentNode->_neighbor;
+        }
+        file.close();
+    }
 }

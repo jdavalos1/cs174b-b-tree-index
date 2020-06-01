@@ -72,6 +72,7 @@ namespace BPTree {
             BPTreeNode(bool isLeaf, int fanout, list<pair<int, int>>* data_records, BPTreeNode* parent, BPTreeNode* neighbor) :
             _isLeaf(isLeaf), _fanout(fanout), _data(data_records), _parent(parent), _neighbor(neighbor), _intervals(NULL) {}
 
+            ~BPTreeNode();
             list<pair<int, int>>* recursive_search(const int&);
             BPTreeNode* recursive_insert(const pair<int, int>*);
 

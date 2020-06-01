@@ -83,9 +83,9 @@ namespace BPTree {
     class BPTreeManager
     {
         private:
-            int _write_queue_size;
+            unsigned int _write_queue_size;
             unsigned int _current_queue = 0;
-            int _fanout;
+            unsigned int _fanout;
             string _file_name;
             BPTreeNode *_root;
         public:

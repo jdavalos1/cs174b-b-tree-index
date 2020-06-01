@@ -78,5 +78,6 @@ namespace BPTree {
         public:
             list<pair<int, int>>* search(const int);
             void insert(pair<int, int>*);
+            void serialize();
     };
 }

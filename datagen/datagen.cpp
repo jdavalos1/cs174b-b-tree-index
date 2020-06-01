@@ -1,15 +1,3 @@
-#include <vector>
-#include <cstdlib>
-#include <cassert>
-#include <cmath>
-
-#include <list>
-#include <unordered_set>
-#include <algorithm>
-
-//#include<stdlib.h>
-#include <time.h>
-
 // Returns a C++ list that sorts by key value. Keys are from 0 to num - 1
 // Key values are from 1 - range
 // If you want distinct key values, set distinct to true. NOTE range has to be greater than num of keys to ensure enough values for distinctness
@@ -199,12 +187,3 @@ std::list<std::pair<int, int> > generateSemiSortedData(int num, int range, bool 
 
   return data;
 }
-
-
-
-// int main() {
-//   auto data = generateSemiSortedData(50, 100, false);
-//   for(auto& pair : data) {
-//     std::cout << "Key: " << pair.first << " value: " << pair.second << std::endl;
-//   }
-// }

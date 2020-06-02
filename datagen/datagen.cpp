@@ -1,3 +1,5 @@
+#include "datagen.h"
+
 // Returns a C++ list that sorts by key value. Keys are from 0 to num - 1
 // Key values are from 1 - range
 // If you want distinct key values, set distinct to true. NOTE range has to be greater than num of keys to ensure enough values for distinctness
@@ -31,7 +33,7 @@ std::list<std::pair<int, int> > generateSortedData(int num, int range, bool dist
   // Sorting list using list::sort method with passed in lambda sort
   // If distinct, then we are just essentially reversing list
   data.sort([](auto const& a, auto const& b) {
-    return a.second > b.second;
+    return a.first > b.first;
   });
 
   return data;
@@ -45,26 +47,25 @@ std::list<std::pair<int, int> > generateUnsortedData(int num, int range, bool di
   std::list<std::pair<int, int> > data;
   srand(time(NULL));
   int val = rand() % (range + 1);
+  assert(range >= num && "Range of values must be more than key slots to ensure distinctness");
   
+
+  std::unordered_set<int> distinctValues;
+  int distinctCounter = 0;
+  do {
+    val = rand() % (range + 1);
+    auto result = distinctValues.insert(val);
+    if(result.second) {
+      distinctCounter++;
+    }
+
+  } while(distinctCounter < num);
+
+
   if(distinct) {
-    assert(range >= num && "Range of values must be more than key slots to ensure distinctness");
-
-    std::unordered_set<int> distinctValues;
-    int distinctCounter = 0;
-    do {
-      val = rand() % (range + 1);
-      auto result = distinctValues.insert(val);
-      if(result.second) {
-        distinctCounter++;
-      }
-
-    } while(distinctCounter < num);
-
-
-    int count = 0;
+    val = (rand() % 11) + 1; // Random multiply factor
     for(auto const& item : distinctValues){
-      data.push_back(std::pair<int, int>(count, item));
-      count++;
+      data.push_back(std::pair<int, int>(item, item*val));
     }
 
     return data;
@@ -74,11 +75,11 @@ std::list<std::pair<int, int> > generateUnsortedData(int num, int range, bool di
   // Non-Distinct case
 
   // For loop to initialize elements
-  for(int i = 0; i < num; i++) {
+  for(auto const& item : distinctValues) {
 
     // Generate new random value 1 - range
     val = rand() % (range + 1);
-    data.push_back(std::pair<int, int>(i, val));
+    data.push_back(std::pair<int, int>(item, val));
   }
 
   return data;

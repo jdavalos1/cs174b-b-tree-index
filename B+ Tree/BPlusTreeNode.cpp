@@ -239,7 +239,7 @@ BPTreeNode* BPTreeNode::recursive_split()
     }
     else
     {
-        if(this->_intervals->size() >= this->_fanout - 1)
+        if(this->_intervals->size() >= this->_fanout)
         {
             // Find position of split and it value
             auto splitPos = this->_intervals->size() / 2;
@@ -287,7 +287,6 @@ void BPTreeNode::add_child(int leftmostValue, BPTreeNode* child)
     // then it's children will be added between intervals[x] and intervals[x+1])
     // and children will be added to children[x+1])
     int i;
-    cout << leftmostValue << endl;
     for(i = 0; i < this->_intervals->size(); i++)
     {
         if(leftmostValue < this->_intervals->at(i))

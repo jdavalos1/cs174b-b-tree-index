@@ -246,7 +246,7 @@ BPTreeNode* BPTreeNode::recursive_split()
             auto parentInterval = this->_intervals->at(splitPos);
             // Create interval and children set for the new node
             auto secondIntervalSet = new vector<int>(this->_intervals->begin() + splitPos + 1, this->_intervals->end());
-            auto secondChildrenSet = new vector<BPTreeNode*>(this->_children->begin() + splitPos, this->_children->end());
+            auto secondChildrenSet = new vector<BPTreeNode*>(this->_children->begin() + splitPos + 1, this->_children->end());
             // Create the new node
             auto newNode = new BPTreeNode(false, this->_fanout, secondChildrenSet, secondIntervalSet);
             // remove the value from the first node since they belong to the second set
@@ -256,8 +256,9 @@ BPTreeNode* BPTreeNode::recursive_split()
             {
                 // create new node as the parent (root)
                 auto bpnode = new BPTreeNode(false, this->_fanout,
-                                                new vector<BPTreeNode*>{this, newNode}, new vector<int>(parentInterval));
+                                                new vector<BPTreeNode*>{this, newNode}, new vector<int>{parentInterval});
                 this->_parent = bpnode;
+                newNode->_parent = bpnode;
                 return bpnode;
             }
             else
@@ -296,6 +297,7 @@ void BPTreeNode::add_child(int leftmostValue, BPTreeNode* child)
             return;
         }
     }
+    child->_parent = this;
     this->_intervals->push_back(leftmostValue);
     this->_children->push_back(child);
 }

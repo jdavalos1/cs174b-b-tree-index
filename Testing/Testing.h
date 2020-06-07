@@ -90,7 +90,7 @@ class UnitTests
         {
             auto bpManager = new BPTreeManager(3, 100);
             
-            for(int i = 1; i < 5; i++) bpManager->insert(new pair<int, int>(i, i));
+            for(int i = 1; i < 6; i++) bpManager->insert(new pair<int, int>(i, i));
 
             auto pages = bpManager->read_pages();
             bpManager->print();

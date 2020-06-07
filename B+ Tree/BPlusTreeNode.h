@@ -1,6 +1,10 @@
 #include <iostream>
 #include <vector>
 #include <list>
+
+#ifndef BPLUSTREENODE_H
+#define BPLUSTREENODE_H
+
 using namespace std;
 
 namespace BPTree {
@@ -59,6 +63,7 @@ namespace BPTree {
                 // to the new non leaf node (typically that's what we want in this case)
                 // based on the intervals vector
             }
+            
             /**
              * @brief Construct a new BPTreeNode object used only by recursive split to create a split
              * page on the tree
@@ -72,12 +77,16 @@ namespace BPTree {
             BPTreeNode(bool isLeaf, int fanout, list<pair<int, int>>* data_records, BPTreeNode* parent, BPTreeNode* neighbor) :
             _isLeaf(isLeaf), _fanout(fanout), _data(data_records), _parent(parent), _neighbor(neighbor), _intervals(NULL) {}
 
+            ~BPTreeNode() {}
             list<pair<int, int>>* recursive_search(const int&);
             BPTreeNode* recursive_insert(const pair<int, int>*);
 
             // Public helper functions
             void add_child(int, BPTreeNode*);
             void persist(string);
+            list<pair<int,int>>* obtain_all_pages();
+            void delete_all_nodes();
+            void print_tree();
     };
     
     class BPTreeManager
@@ -88,6 +97,11 @@ namespace BPTree {
             unsigned int _fanout;
             string _file_name;
             BPTreeNode *_root;
+            ~BPTreeManager()
+            {
+                serialize(_file_name);
+                _root->delete_all_nodes();
+            }
         public:
             BPTreeManager(unsigned int fanout = 5, unsigned int write_queue_size = 4, string fileName = "dbtree.db") : _write_queue_size(write_queue_size), _fanout(fanout), _file_name(fileName) 
             {
@@ -96,5 +110,11 @@ namespace BPTree {
             list<pair<int, int>>* search(const int);
             void insert(pair<int, int>*);
             void serialize(string);
+            list<pair<int, int>>* read_pages();
+            void print()
+            {
+                _root->print_tree();
+            }
     };
 }
+#endif // BPLUSTREENODE_H

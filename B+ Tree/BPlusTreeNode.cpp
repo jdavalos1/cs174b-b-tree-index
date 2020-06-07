@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <math.h>
 #include "BPlusTreeNode.h"
 
 using namespace BPTree;
@@ -58,6 +59,11 @@ void BPTreeManager::insert(pair<int, int>* record)
 void BPTreeManager::serialize(string dbFile)
 {
     this->_root->persist(dbFile);
+}
+
+list<pair<int, int>>* BPTreeManager::read_pages()
+{
+    return this->_root->obtain_all_pages();
 }
 
 /**
@@ -121,7 +127,6 @@ list<pair<int, int>>* BPTreeNode::recursive_search(const int& searchKey)
     return this->recursive_search(searchKey);
 }
 
-
 /**
  * @brief Recursively step into the tree to insert a value.
  * If the insertion exceeds the fanout-1 space in a leaf
@@ -140,19 +145,29 @@ BPTreeNode* BPTreeNode::recursive_insert(const pair<int, int>* data_record)
     {
         // Find the location where the new data record can be added
         // to the page/leaf
-        for(auto it = this->_data->begin(); it != this->_data->end(); it++)
+        if(this->_data->empty())
+        {
+            this->_data->push_front(make_pair(data_record->first, data_record->second));
+            return NULL;
+        }
+        auto it = this->_data->begin();
+        for(; it != this->_data->end(); it++)
         {
             // Add the data in a sorted order in the page
-            if(it->first < data_record->first)
+            if(it->first >= data_record->first)
             {
-                this->_data->insert(it, *data_record);
+                this->_data->insert(it, make_pair(data_record->first, data_record->second));
                 break;
             }
+        }
+        if(it == this->_data->end())
+        {
+            this->_data->push_back(make_pair(data_record->first, data_record->second));
         }
         // Check if this caused an overflow
         // thus requring a split on the leaf to accomadate
         // for the size constraints
-        if(this->_data->size() >= this->_fanout-1)
+        if(this->_data->size() > (this->_fanout-1))
         {
             return this->recursive_split();
         }
@@ -163,16 +178,21 @@ BPTreeNode* BPTreeNode::recursive_insert(const pair<int, int>* data_record)
         int i;
         for(i = 0; i < this->_intervals->size(); i++)
         {
-            // Check if the data records search key is less than
             // the interval at i in order to break and add the value
             // to that location.
             if(data_record->first < this->_intervals->at(i))
-                break;
+            {
+                // Call a recursive insert to find out where we can place
+                // the data record
+                return this->_children->at(i)->recursive_insert(data_record);
+            }
         }
-        // Call a recursive insert to find out where we can place
-        // the data record
-        return this->_children->at(i)->recursive_insert(data_record);
+        if(i >= this->_intervals->size())
+        {
+            return this->_children->back()->recursive_insert(data_record);
+        }
     }
+    return NULL;
 }
 
 /**
@@ -188,23 +208,27 @@ BPTreeNode* BPTreeNode::recursive_split()
     if(this->_isLeaf)
     {
         // Split the list into two based equally (or almost equally) distributed
-        // Using the splice functionn the list is split in 2 into a second list
-        // and then into a new leaf
-        int splitPos = this->_data->size() / 2;
+        int splitPos = this->_data->size() / 2,
+            og_size = this->_data->size();
         auto secondList = new list<pair<int, int>>();
-        auto og_it = this->_data->begin();
-        advance(og_it, splitPos);
-        secondList->splice(secondList->begin(), *secondList, og_it, this->_data->end());
-
+        for(int i = splitPos; i < og_size; i++)
+        {
+            secondList->push_front(this->_data->back());
+            this->_data->pop_back();
+        }
         // Create a new leaf and then attach the new leaf as the neighbor of the 
         auto newLeaf = new BPTreeNode(true, this->_fanout, secondList, this->_parent, this->_neighbor);
         this->_neighbor = newLeaf;
+        
 
         // This case only happens at the root if the root is a leaf
         if(this->_parent == NULL)
         {
-            auto intervals = new vector<int>(secondList->front().first);
-            return new BPTreeNode(false, this->_fanout, new vector<BPTreeNode*>{this, newLeaf}, intervals);
+            auto intervals = new vector<int>{secondList->front().first};
+            auto bpnode = new BPTreeNode(false, this->_fanout, new vector<BPTreeNode*>{this, newLeaf}, intervals);
+            this->_parent = bpnode;
+            newLeaf->_parent = bpnode;
+            return bpnode;
         }
         
         // Parent exists so we can call a recursive split but before
@@ -215,14 +239,14 @@ BPTreeNode* BPTreeNode::recursive_split()
     }
     else
     {
-        if(this->_intervals->size() >= this->_fanout - 1)
+        if(this->_intervals->size() >= this->_fanout)
         {
             // Find position of split and it value
             auto splitPos = this->_intervals->size() / 2;
             auto parentInterval = this->_intervals->at(splitPos);
             // Create interval and children set for the new node
             auto secondIntervalSet = new vector<int>(this->_intervals->begin() + splitPos + 1, this->_intervals->end());
-            auto secondChildrenSet = new vector<BPTreeNode*>(this->_children->begin() + splitPos, this->_children->end());
+            auto secondChildrenSet = new vector<BPTreeNode*>(this->_children->begin() + splitPos + 1, this->_children->end());
             // Create the new node
             auto newNode = new BPTreeNode(false, this->_fanout, secondChildrenSet, secondIntervalSet);
             // remove the value from the first node since they belong to the second set
@@ -231,8 +255,11 @@ BPTreeNode* BPTreeNode::recursive_split()
             if(this->_parent == NULL)
             {
                 // create new node as the parent (root)
-                return new BPTreeNode(false, this->_fanout,
-                                                new vector<BPTreeNode*>{this, newNode}, new vector<int>(parentInterval));
+                auto bpnode = new BPTreeNode(false, this->_fanout,
+                                                new vector<BPTreeNode*>{this, newNode}, new vector<int>{parentInterval});
+                this->_parent = bpnode;
+                newNode->_parent = bpnode;
+                return bpnode;
             }
             else
             {
@@ -263,10 +290,16 @@ void BPTreeNode::add_child(int leftmostValue, BPTreeNode* child)
     int i;
     for(i = 0; i < this->_intervals->size(); i++)
     {
-        if(leftmostValue < this->_intervals->at(i)) break;
+        if(leftmostValue < this->_intervals->at(i))
+        {
+            this->_intervals->insert(this->_intervals->begin() + i, leftmostValue);
+            this->_children->insert(this->_children->begin() + i, child);
+            return;
+        }
     }
-    this->_intervals->insert(this->_intervals->begin() + i, leftmostValue);
-    this->_children->insert(this->_children->begin() + (i + 1), child);
+    child->_parent = this;
+    this->_intervals->push_back(leftmostValue);
+    this->_children->push_back(child);
 }
 
 /**
@@ -294,4 +327,60 @@ void BPTreeNode::persist(string dbFile)
         }
         file.close();
     }
+}
+
+void BPTreeNode::delete_all_nodes()
+{
+    if(this->_isLeaf)
+    {
+        delete this->_data;
+        this->_data = NULL;
+        this->_neighbor = NULL;
+    }
+
+    for(int i = 0; i < _children->size(); i++)
+    {
+        _children->at(i)->delete_all_nodes();
+        delete _children->at(i);
+    }
+    delete _intervals;
+    delete _children;
+}
+
+list<pair<int, int>>* BPTreeNode::obtain_all_pages()
+{
+    auto it = this;
+
+    while(!it->_isLeaf) it = it->_children->front();
+    auto data_entries = new list<pair<int, int>>();
+
+    while(it != NULL)
+    {
+        for(auto i = it->_data->begin(); i != it->_data->end(); i++)
+        {
+            data_entries->push_back(make_pair(i->first, i->second));
+        }
+        it = it->_neighbor;
+    }
+
+    return data_entries;
+}
+
+void BPTreeNode::print_tree()
+{
+    if(_isLeaf)
+    {
+        for(auto it = this->_data->begin(); it != this->_data->end(); it++) cout << it->first << " " << it->second << "-";
+    }
+    else
+    {
+        for(auto i = 0; i < _intervals->size(); i++) cout << _intervals->at(i) << " ";
+        cout << "\n\n";
+        for(auto i = 0; i < _children->size(); i++)
+        { 
+            _children->at(i)->print_tree();
+            cout << "\n";
+        }
+    }
+    
 }

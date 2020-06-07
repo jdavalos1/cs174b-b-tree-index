@@ -167,7 +167,7 @@ BPTreeNode* BPTreeNode::recursive_insert(const pair<int, int>* data_record)
         // Check if this caused an overflow
         // thus requring a split on the leaf to accomadate
         // for the size constraints
-        if(this->_data->size() > this->_fanout-1)
+        if(this->_data->size() > (this->_fanout-1))
         {
             return this->recursive_split();
         }
@@ -178,15 +178,19 @@ BPTreeNode* BPTreeNode::recursive_insert(const pair<int, int>* data_record)
         int i;
         for(i = 0; i < this->_intervals->size(); i++)
         {
-            // Check if the data records search key is less than
             // the interval at i in order to break and add the value
             // to that location.
             if(data_record->first < this->_intervals->at(i))
-                break;
+            {
+                // Call a recursive insert to find out where we can place
+                // the data record
+                return this->_children->at(i)->recursive_insert(data_record);
+            }
         }
-        // Call a recursive insert to find out where we can place
-        // the data record
-        return this->_children->at(i)->recursive_insert(data_record);
+        if(i >= this->_intervals->size())
+        {
+            return this->_children->back()->recursive_insert(data_record);
+        }
     }
     return NULL;
 }
@@ -204,13 +208,14 @@ BPTreeNode* BPTreeNode::recursive_split()
     if(this->_isLeaf)
     {
         // Split the list into two based equally (or almost equally) distributed
-        // Using the splice functionn the list is split in 2 into a second list
-        // and then into a new leaf
-        int splitPos = ceil(float(this->_data->size()) / 2.0);
+        int splitPos = this->_data->size() / 2,
+            og_size = this->_data->size();
         auto secondList = new list<pair<int, int>>();
-        auto og_it = this->_data->begin();
-        advance(og_it, splitPos);
-        secondList->splice(secondList->begin(), *secondList, og_it, this->_data->end());
+        for(int i = splitPos; i < og_size; i++)
+        {
+            secondList->push_front(this->_data->back());
+            this->_data->pop_back();
+        }
         // Create a new leaf and then attach the new leaf as the neighbor of the 
         auto newLeaf = new BPTreeNode(true, this->_fanout, secondList, this->_parent, this->_neighbor);
         this->_neighbor = newLeaf;
@@ -219,8 +224,11 @@ BPTreeNode* BPTreeNode::recursive_split()
         // This case only happens at the root if the root is a leaf
         if(this->_parent == NULL)
         {
-            auto intervals = new vector<int>(secondList->front().first);
-            return new BPTreeNode(false, this->_fanout, new vector<BPTreeNode*>{this, newLeaf}, intervals);
+            auto intervals = new vector<int>{secondList->front().first};
+            auto bpnode = new BPTreeNode(false, this->_fanout, new vector<BPTreeNode*>{this, newLeaf}, intervals);
+            this->_parent = bpnode;
+            newLeaf->_parent = bpnode;
+            return bpnode;
         }
         
         // Parent exists so we can call a recursive split but before
@@ -247,8 +255,10 @@ BPTreeNode* BPTreeNode::recursive_split()
             if(this->_parent == NULL)
             {
                 // create new node as the parent (root)
-                return new BPTreeNode(false, this->_fanout,
+                auto bpnode = new BPTreeNode(false, this->_fanout,
                                                 new vector<BPTreeNode*>{this, newNode}, new vector<int>(parentInterval));
+                this->_parent = bpnode;
+                return bpnode;
             }
             else
             {
@@ -277,12 +287,18 @@ void BPTreeNode::add_child(int leftmostValue, BPTreeNode* child)
     // then it's children will be added between intervals[x] and intervals[x+1])
     // and children will be added to children[x+1])
     int i;
+    cout << leftmostValue << endl;
     for(i = 0; i < this->_intervals->size(); i++)
     {
-        if(leftmostValue < this->_intervals->at(i)) break;
+        if(leftmostValue < this->_intervals->at(i))
+        {
+            this->_intervals->insert(this->_intervals->begin() + i, leftmostValue);
+            this->_children->insert(this->_children->begin() + i, child);
+            return;
+        }
     }
-    this->_intervals->insert(this->_intervals->begin() + i, leftmostValue);
-    this->_children->insert(this->_children->begin() + (i + 1), child);
+    this->_intervals->push_back(leftmostValue);
+    this->_children->push_back(child);
 }
 
 /**
@@ -347,4 +363,23 @@ list<pair<int, int>>* BPTreeNode::obtain_all_pages()
     }
 
     return data_entries;
+}
+
+void BPTreeNode::print_tree()
+{
+    if(_isLeaf)
+    {
+        for(auto it = this->_data->begin(); it != this->_data->end(); it++) cout << it->first << " " << it->second << "-";
+    }
+    else
+    {
+        for(auto i = 0; i < _intervals->size(); i++) cout << _intervals->at(i) << " ";
+        cout << "\n\n";
+        for(auto i = 0; i < _children->size(); i++)
+        { 
+            _children->at(i)->print_tree();
+            cout << "\n";
+        }
+    }
+    
 }

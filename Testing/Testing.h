@@ -8,9 +8,10 @@ class UnitTests
 {
     private:
         int _fail_count;
+        int _total_count;
         bool _output;
     public:
-        UnitTests(bool output = true) : _fail_count(0), _output(output) {}
+        UnitTests(bool output = true) : _total_count(0), _fail_count(0), _output(output) {}
 
         void testSingleInsertion_RootShouldOnlyContainOneValue()
         {
@@ -32,6 +33,7 @@ class UnitTests
             }
 
             if(_output) cout << "Single Insert Passed\n";
+            _total_count++;
         }
 
         void testThreeInsert_ShouldContainThreeValues_OnReturnOf123SearchKeyAndRecordId()
@@ -55,7 +57,8 @@ class UnitTests
                 counter++;
             }
 
-            if(_output) cout << "Triple insert passed\n";
+            if(_output) cout << "Five insert passed\n";
+            _total_count++;
         }
 
         void testThreeInputsOutOfOrder_ShouldContainThreeValues_OnReturOf123SearchKeyAndRecordId()
@@ -79,6 +82,30 @@ class UnitTests
                 counter++;
             }
 
-            if(_output) cout << "Triple insert passed\n";
+            if(_output) cout << "triple insert passed\n";
+            _total_count++;
+        }
+
+        void testFiveInputsInOrder_ShouldContainValues12345ForSearchKeyAndRecordId()
+        {
+            auto bpManager = new BPTreeManager(3, 100);
+            
+            for(int i = 1; i < 5; i++) bpManager->insert(new pair<int, int>(i, i));
+
+            auto pages = bpManager->read_pages();
+            bpManager->print();
+            int counter = 1;
+            for(auto page = pages->begin(); page != pages->end(); page++)
+            {
+                if(page->first != counter || page->second != counter)
+                {
+                    if(_output) cout << "Five insert Failed at value " << counter << " with values <"<<  page->first << ", " << page->second << ">\n";
+                    _fail_count++;
+                    return;
+                }
+                counter++;
+            }
+            if(_output) cout << "five insert passed\n";
+            _total_count++;
         }
 };  

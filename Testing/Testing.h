@@ -57,4 +57,28 @@ class UnitTests
 
             if(_output) cout << "Triple insert passed\n";
         }
+
+        void testThreeInputsOutOfOrder_ShouldContainThreeValues_OnReturOf123SearchKeyAndRecordId()
+        {
+            auto bpManager = new BPTreeManager(3);
+
+            bpManager->insert(new pair<int, int>(1, 1));
+            bpManager->insert(new pair<int, int>(3, 3));
+            bpManager->insert(new pair<int, int>(2, 2));
+
+            auto pages = bpManager->read_pages();
+            int counter = 1;
+            for(auto page = pages->begin(); page != pages->end(); page++)
+            {
+                if(page->first != counter || page->second != counter)
+                {
+                    if(_output) cout << "Triple insert Failed at value " << counter << " with values <"<<  page->first << ", " << page->second << ">\n";
+                    _fail_count++;
+                    return;
+                }
+                counter++;
+            }
+
+            if(_output) cout << "Triple insert passed\n";
+        }
 };  

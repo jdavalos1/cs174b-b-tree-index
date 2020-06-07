@@ -8,5 +8,6 @@ int main(int argc, char * argv[])
     auto unittests = UnitTests();
 
     //unittests.testSingleInsertion_RootShouldOnlyContainOneValue();
-    unittests.testThreeInsert_ShouldContainThreeValues_OnReturnOf123SearchKeyAndRecordId();
+    //unittests.testThreeInsert_ShouldContainThreeValues_OnReturnOf123SearchKeyAndRecordId();
+    unittests.testThreeInputsOutOfOrder_ShouldContainThreeValues_OnReturOf123SearchKeyAndRecordId();
 }

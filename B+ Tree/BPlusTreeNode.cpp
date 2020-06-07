@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <math.h>
 #include "BPlusTreeNode.h"
 
 using namespace BPTree;
@@ -58,6 +59,11 @@ void BPTreeManager::insert(pair<int, int>* record)
 void BPTreeManager::serialize(string dbFile)
 {
     this->_root->persist(dbFile);
+}
+
+list<pair<int, int>>* BPTreeManager::read_pages()
+{
+    return this->_root->obtain_all_pages();
 }
 
 /**
@@ -121,7 +127,6 @@ list<pair<int, int>>* BPTreeNode::recursive_search(const int& searchKey)
     return this->recursive_search(searchKey);
 }
 
-
 /**
  * @brief Recursively step into the tree to insert a value.
  * If the insertion exceeds the fanout-1 space in a leaf
@@ -140,19 +145,29 @@ BPTreeNode* BPTreeNode::recursive_insert(const pair<int, int>* data_record)
     {
         // Find the location where the new data record can be added
         // to the page/leaf
-        for(auto it = this->_data->begin(); it != this->_data->end(); it++)
+        if(this->_data->empty())
+        {
+            this->_data->push_front(make_pair(data_record->first, data_record->second));
+            return NULL;
+        }
+        auto it = this->_data->begin();
+        for(; it != this->_data->end(); it++)
         {
             // Add the data in a sorted order in the page
-            if(it->first < data_record->first)
+            if(it->first >= data_record->first)
             {
-                this->_data->insert(it, *data_record);
+                this->_data->insert(it, make_pair(data_record->first, data_record->second));
                 break;
             }
+        }
+        if(it == this->_data->end())
+        {
+            this->_data->push_back(make_pair(data_record->first, data_record->second));
         }
         // Check if this caused an overflow
         // thus requring a split on the leaf to accomadate
         // for the size constraints
-        if(this->_data->size() >= this->_fanout-1)
+        if(this->_data->size() > this->_fanout-1)
         {
             return this->recursive_split();
         }
@@ -173,6 +188,7 @@ BPTreeNode* BPTreeNode::recursive_insert(const pair<int, int>* data_record)
         // the data record
         return this->_children->at(i)->recursive_insert(data_record);
     }
+    return NULL;
 }
 
 /**
@@ -190,15 +206,15 @@ BPTreeNode* BPTreeNode::recursive_split()
         // Split the list into two based equally (or almost equally) distributed
         // Using the splice functionn the list is split in 2 into a second list
         // and then into a new leaf
-        int splitPos = this->_data->size() / 2;
+        int splitPos = ceil(float(this->_data->size()) / 2.0);
         auto secondList = new list<pair<int, int>>();
         auto og_it = this->_data->begin();
         advance(og_it, splitPos);
         secondList->splice(secondList->begin(), *secondList, og_it, this->_data->end());
-
         // Create a new leaf and then attach the new leaf as the neighbor of the 
         auto newLeaf = new BPTreeNode(true, this->_fanout, secondList, this->_parent, this->_neighbor);
         this->_neighbor = newLeaf;
+        
 
         // This case only happens at the root if the root is a leaf
         if(this->_parent == NULL)
@@ -294,4 +310,41 @@ void BPTreeNode::persist(string dbFile)
         }
         file.close();
     }
+}
+
+void BPTreeNode::delete_all_nodes()
+{
+    if(this->_isLeaf)
+    {
+        delete this->_data;
+        this->_data = NULL;
+        this->_neighbor = NULL;
+    }
+
+    for(int i = 0; i < _children->size(); i++)
+    {
+        _children->at(i)->delete_all_nodes();
+        delete _children->at(i);
+    }
+    delete _intervals;
+    delete _children;
+}
+
+list<pair<int, int>>* BPTreeNode::obtain_all_pages()
+{
+    auto it = this;
+
+    while(!it->_isLeaf) it = it->_children->front();
+    auto data_entries = new list<pair<int, int>>();
+
+    while(it != NULL)
+    {
+        for(auto i = it->_data->begin(); i != it->_data->end(); i++)
+        {
+            data_entries->push_back(make_pair(i->first, i->second));
+        }
+        it = it->_neighbor;
+    }
+
+    return data_entries;
 }

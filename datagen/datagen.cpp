@@ -33,7 +33,7 @@ std::list<std::pair<int, int> > generateSortedData(int num, int range, bool dist
   // Sorting list using list::sort method with passed in lambda sort
   // If distinct, then we are just essentially reversing list
   data.sort([](auto const& a, auto const& b) {
-    return a.first > b.first;
+    return a.first < b.first;
   });
 
   return data;

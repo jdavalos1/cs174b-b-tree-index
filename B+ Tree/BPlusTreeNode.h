@@ -115,7 +115,6 @@ namespace BPTree {
                     std::list<std::pair<int, int>> fileData;
                     std::string keyString, valueString;
                     int key, value;
-                    std::cout << "fileName: " << fileName << std::endl;
                     std::ifstream inFile(fileName);
 
                     if(!inFile) {

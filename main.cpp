@@ -12,5 +12,7 @@ int main(int argc, char * argv[])
     //unittests.testThreeInputsOutOfOrder_ShouldContainThreeValues_OnReturOf123SearchKeyAndRecordId();
     //unittests.testFiveInputsInOrder_ShouldContainValues12345ForSearchKeyAndRecordId();
     //unittests.testBulkLoad15ItemsInOrder_ReturnShouldContainValues1_15();
-    unittests.testBulkLoadFromAFile_ReturnShouldContainValues1_10();
+    //unittests.testTreeStatsFunction_ReturnShouldHaveHeight2_Nodes10();
+    unittests.testDirectInsertExperiment(1);
+    //unittests.testBulkLoadingInsertExperiment(1);
 }

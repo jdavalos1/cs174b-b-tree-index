@@ -314,6 +314,7 @@ void BPTreeNode::add_child(int leftmostValue, BPTreeNode* child)
     // and the children nodes (i.e. if intervals can be added to x
     // then it's children will be added between intervals[x] and intervals[x+1])
     // and children will be added to children[x+1])
+    if(this->_intervals && !this->_isLeaf) this->_intervals = new vector<int>();
     int i;
     for(i = 0; i < this->_intervals->size(); i++)
     {

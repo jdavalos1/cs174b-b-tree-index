@@ -1,6 +1,9 @@
 #include <iostream>
 #include <vector>
 #include <list>
+#include <string>
+#include <utility>
+#include <fstream>
 
 #ifndef BPLUSTREENODE_H
 #define BPLUSTREENODE_H
@@ -32,7 +35,7 @@ namespace BPTree {
              */
             BPTreeNode(bool isLeaf, int fanout) : _isLeaf(isLeaf), _fanout(fanout)
             { 
-                if(_isLeaf)
+                if(isLeaf)
                 {
                     _data = new list<pair<int, int>>();
                     _intervals = NULL;
@@ -87,6 +90,9 @@ namespace BPTree {
             list<pair<int,int>>* obtain_all_pages();
             void delete_all_nodes();
             void print_tree();
+            BPTreeNode* insert_page(BPTreeNode*);
+            void add_neighbor(BPTreeNode *node) {this->_neighbor = node;}
+            pair<int, int> get_experiment_stats();
     };
     
     class BPTreeManager
@@ -97,15 +103,40 @@ namespace BPTree {
             unsigned int _fanout;
             string _file_name;
             BPTreeNode *_root;
+        public:
+            BPTreeManager(unsigned int fanout = 5, unsigned int write_queue_size = 4, bool bulk_load = false, bool load_file = false, string fileName = "dbtree.db") : _write_queue_size(write_queue_size), _fanout(fanout), _file_name(fileName) 
+            {
+                if(bulk_load)
+                    _root = new BPTreeNode(false, fanout);
+                else
+                    _root = new BPTreeNode(true, _fanout);
+
+                if(load_file) {
+                    std::list<std::pair<int, int>> fileData;
+                    std::string keyString, valueString;
+                    int key, value;
+                    std::ifstream inFile(fileName);
+
+                    if(!inFile) {
+                        std::cerr << "Can't read from fileName in load_file!" << std::endl;
+                        exit(1);
+                    }
+
+                    while (!inFile.eof()) {
+                        getline(inFile, keyString, ',') && getline(inFile, valueString);
+                        key = std::stoi(keyString);
+                        value = std::stoi(valueString);
+
+                        fileData.push_back(std::pair<int, int>(key, value));
+                    }
+
+                    this->bulk_load(fileData);
+                }
+            }
             ~BPTreeManager()
             {
                 serialize(_file_name);
                 _root->delete_all_nodes();
-            }
-        public:
-            BPTreeManager(unsigned int fanout = 5, unsigned int write_queue_size = 4, string fileName = "dbtree.db") : _write_queue_size(write_queue_size), _fanout(fanout), _file_name(fileName) 
-            {
-                _root = new BPTreeNode(true, fanout);
             }
             list<pair<int, int>>* search(const int);
             void insert(pair<int, int>*);
@@ -114,6 +145,11 @@ namespace BPTree {
             void print()
             {
                 _root->print_tree();
+            }
+            void bulk_load(list<pair<int,int>> data_entries, float fill_factor=1.0);
+            // Uses a similar approach to print tree in order to get tree height and # of nodes
+            pair<int, int> get_tree_stats() {
+                _root->get_experiment_stats();
             }
     };
 }

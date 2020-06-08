@@ -121,4 +121,18 @@ class UnitTests
 
             bpManager->print();
         }
+
+        void testBulkLoadFromAFile_ReturnShouldContainValues1_10() {
+            auto bpManager = new BPTreeManager(5,100, true, true, "../Testing/testFile.db");
+            bpManager->print();
+        }
+
+        void testTreeStatsFunction_ReturnShouldHaveHeight2_Nodes10() {
+            auto bpManager = new BPTreeManager(5,100, true, true, "../Testing/testFile.db");
+            bpManager->print();
+            std::pair<int, int> stats = bpManager->get_tree_stats();
+            std::cout << "Height: " << stats.first << " Number of nodes: " << stats.second << std::endl;
+        }
+
+
 };  

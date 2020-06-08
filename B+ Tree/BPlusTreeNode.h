@@ -1,6 +1,9 @@
 #include <iostream>
 #include <vector>
 #include <list>
+#include <string>
+#include <utility>
+#include <fstream>
 
 #ifndef BPLUSTREENODE_H
 #define BPLUSTREENODE_H
@@ -89,6 +92,7 @@ namespace BPTree {
             void print_tree();
             BPTreeNode* insert_page(BPTreeNode*);
             void add_neighbor(BPTreeNode *node) {this->_neighbor = node;}
+            pair<int, int> get_experiment_stats();
     };
     
     class BPTreeManager
@@ -106,6 +110,29 @@ namespace BPTree {
                     _root = new BPTreeNode(false, fanout);
                 else
                     _root = new BPTreeNode(true, _fanout);
+
+                if(load_file) {
+                    std::list<std::pair<int, int>> fileData;
+                    std::string keyString, valueString;
+                    int key, value;
+                    std::cout << "fileName: " << fileName << std::endl;
+                    std::ifstream inFile(fileName);
+
+                    if(!inFile) {
+                        std::cerr << "Can't read from fileName in load_file!" << std::endl;
+                        exit(1);
+                    }
+
+                    while (!inFile.eof()) {
+                        getline(inFile, keyString, ',') && getline(inFile, valueString);
+                        key = std::stoi(keyString);
+                        value = std::stoi(valueString);
+
+                        fileData.push_back(std::pair<int, int>(key, value));
+                    }
+
+                    this->bulk_load(fileData);
+                }
             }
             ~BPTreeManager()
             {
@@ -121,6 +148,10 @@ namespace BPTree {
                 _root->print_tree();
             }
             void bulk_load(list<pair<int,int>> data_entries, float fill_factor=1.0);
+            // Uses a similar approach to print tree in order to get tree height and # of nodes
+            pair<int, int> get_tree_stats() {
+                _root->get_experiment_stats();
+            }
     };
 }
 #endif // BPLUSTREENODE_H

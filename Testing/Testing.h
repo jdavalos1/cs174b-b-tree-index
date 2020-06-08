@@ -107,5 +107,18 @@ class UnitTests
             }
             if(_output) cout << "five insert passed\n";
             _total_count++;
+
+            delete bpManager;
+        }
+
+        void testBulkLoad15ItemsInOrder_ReturnShouldContainValues1_15()
+        {
+            auto bpManager = new BPTreeManager(3,100, true);
+            auto dataset = list<pair<int, int>>();
+            for(int i = 0; i < 15; i++)
+                dataset.push_back(make_pair(i, i));
+            bpManager->bulk_load(dataset);
+
+            bpManager->print();
         }
 };  

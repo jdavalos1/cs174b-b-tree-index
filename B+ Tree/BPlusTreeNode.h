@@ -32,7 +32,7 @@ namespace BPTree {
              */
             BPTreeNode(bool isLeaf, int fanout) : _isLeaf(isLeaf), _fanout(fanout)
             { 
-                if(_isLeaf)
+                if(isLeaf)
                 {
                     _data = new list<pair<int, int>>();
                     _intervals = NULL;
@@ -87,6 +87,8 @@ namespace BPTree {
             list<pair<int,int>>* obtain_all_pages();
             void delete_all_nodes();
             void print_tree();
+            BPTreeNode* insert_page(BPTreeNode*);
+            void add_neighbor(BPTreeNode *node) {this->_neighbor = node;}
     };
     
     class BPTreeManager
@@ -97,15 +99,18 @@ namespace BPTree {
             unsigned int _fanout;
             string _file_name;
             BPTreeNode *_root;
+        public:
+            BPTreeManager(unsigned int fanout = 5, unsigned int write_queue_size = 4, bool bulk_load = false, bool load_file = false, string fileName = "dbtree.db") : _write_queue_size(write_queue_size), _fanout(fanout), _file_name(fileName) 
+            {
+                if(bulk_load)
+                    _root = new BPTreeNode(false, fanout);
+                else
+                    _root = new BPTreeNode(true, _fanout);
+            }
             ~BPTreeManager()
             {
                 serialize(_file_name);
                 _root->delete_all_nodes();
-            }
-        public:
-            BPTreeManager(unsigned int fanout = 5, unsigned int write_queue_size = 4, string fileName = "dbtree.db") : _write_queue_size(write_queue_size), _fanout(fanout), _file_name(fileName) 
-            {
-                _root = new BPTreeNode(true, fanout);
             }
             list<pair<int, int>>* search(const int);
             void insert(pair<int, int>*);
@@ -115,6 +120,7 @@ namespace BPTree {
             {
                 _root->print_tree();
             }
+            void bulk_load(list<pair<int,int>> data_entries, float fill_factor=1.0);
     };
 }
 #endif // BPLUSTREENODE_H

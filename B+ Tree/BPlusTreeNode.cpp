@@ -66,6 +66,33 @@ list<pair<int, int>>* BPTreeManager::read_pages()
     return this->_root->obtain_all_pages();
 }
 
+void BPTreeManager::bulk_load(list<pair<int,int>> data_entries, float fill_factor)
+{
+    data_entries.sort([](auto const& a, auto const& b) {
+        return a.first > b.first;
+    });
+    auto pages = list<BPTreeNode*>();
+    auto page_records = new list<pair<int, int>>();
+    int counter = 0;
+    for(auto data_entry : data_entries)
+    {
+        page_records->push_back(make_pair(data_entry.first, data_entry.second));
+        if(page_records->size() >= fill_factor * (_fanout - 1))
+        {
+            pages.push_back(new BPTreeNode(true, _fanout, page_records, NULL, NULL));
+            page_records = new list<pair<int, int>>();
+        }
+    }
+    for(auto it = pages.begin(); it != pages.end(); it++)
+    {
+        auto next = it;
+        next++;
+        (*it)->add_neighbor(*next);
+        auto newRoot = _root->insert_page(*it);
+        if(newRoot != NULL) _root = newRoot;
+    }
+}
+
 /**
  * @brief 
  * Recurses through tree to find a node with the needed value
@@ -312,7 +339,7 @@ void BPTreeNode::persist(string dbFile)
     // Get the leftmost node so that we traverse through
     // every page's neighbors to get the data records
     // without traversing the tree
-    while(!currentNode->_isLeaf) currentNode->_children->at(0);
+    while(!currentNode->_isLeaf) currentNode = currentNode->_children->front();
 
     ofstream file(dbFile);
     if(file.is_open())
@@ -323,10 +350,10 @@ void BPTreeNode::persist(string dbFile)
             {
                 file << it->first << "," << it->second << "\n";
             }
-            currentNode->_neighbor;
+            currentNode = currentNode->_neighbor;
         }
-        file.close();
     }
+    file.close();
 }
 
 void BPTreeNode::delete_all_nodes()
@@ -382,5 +409,18 @@ void BPTreeNode::print_tree()
             cout << "\n";
         }
     }
-    
+}
+BPTreeNode* BPTreeNode::insert_page(BPTreeNode *child)
+{
+    if(this->_children == NULL || this->_children->empty()) 
+    {
+        this->_children = new vector<BPTreeNode*>();
+        this->_children->push_back(child);
+        return NULL;
+    }
+
+    auto it = this;
+    while(!it->_children->back()->_isLeaf) it = _children->back();
+    it->add_child(child->_data->front().first, child);
+    return it->recursive_split();
 }

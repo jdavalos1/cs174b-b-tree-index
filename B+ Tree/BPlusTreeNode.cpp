@@ -69,7 +69,7 @@ list<pair<int, int>>* BPTreeManager::read_pages()
 void BPTreeManager::bulk_load(list<pair<int,int>> data_entries, float fill_factor)
 {
     data_entries.sort([](auto const& a, auto const& b) {
-        return a.first > b.first;
+        return a.first < b.first;
     });
     auto pages = list<BPTreeNode*>();
     auto page_records = new list<pair<int, int>>();

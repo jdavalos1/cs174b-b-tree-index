@@ -194,8 +194,8 @@ class UnitTests
          * @brief The test function for the single insertion case
          * @param option - The type of data you want to generate. 0 is sorted, 1 is unsorted, 2 is semi-sorted
          */
-        void testBulkLoadingInsertExperiment(int option) {
-            int records = 50000;
+        void testBulkLoadingInsertExperiment(int option, int r) {
+            int records = r;
             string dataOption;
             chrono::steady_clock::time_point start, end;
             chrono::duration<double> totalTime;
@@ -203,45 +203,42 @@ class UnitTests
             auto bpManager = new BPTreeManager(6, 100000, true);
 
             // Begin testing for n = 50,000, 100,000... 1M
-            for (int i = 1; i < 21; i++) {
-                records = 50000 * i;
+            switch (option) {
+                // Sorted Data Case
+                case 0:
+                    dataOption = "Sorted Data";
+                    data = generateSortedData(records, 2000000, false);
+                    break;
 
-                switch (option) {
-                    // Sorted Data Case
-                    case 0:
-                        dataOption = "Sorted Data";
-                        data = generateSortedData(records, 2000000, false);
-                        break;
+                    // Unsorted Case
+                case 1:
+                    dataOption = "Unsorted Data";
+                    data = generateUnsortedData(records, 2000000, false);
+                    break;
 
-                        // Unsorted Case
-                    case 1:
-                        dataOption = "Unsorted Data";
-                        data = generateUnsortedData(records, 2000000, false);
-                        break;
-
-                        // Semi-Sorted Case
-                    case 2:
-                        dataOption = "Semi-Sorted Data";
-                        data = generateSemiSortedData(records, 2000000, false);
-                        break;
-                }
-
-                // Beginning counting how long it takes to insert all records into tree
-                cout << "About to bulk load with " << dataOption << endl;
-                start = std::chrono::steady_clock::now();
-                bpManager->bulk_load(data);
-                end = std::chrono::steady_clock::now();
-                cout << "Finished bulk loading!" << endl;
-                totalTime = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
-
-                if(_output) {
-                    //pair<int, int> stats = bpManager->get_tree_stats();
-                    cout << "---------- Test " << i << " ----------" << endl;
-                    cout << "Bulk Insertion Case (" << dataOption << "): Insertion of " << records << " records into the B+ Tree took " << totalTime.count() << "s" << endl;
-                    //cout << "Height after insertion: " << stats.first << "\n" << "Nodes in index: " << stats.second << endl;
-                    cout << "---------- End of Test " << i << " ----------\n" << endl;
-                }
+                    // Semi-Sorted Case
+                case 2:
+                    dataOption = "Semi-Sorted Data";
+                    data = generateSemiSortedData(records, 2000000, false);
+                    break;
             }
+
+            // Beginning counting how long it takes to insert all records into tree
+            cout << "About to bulk load with " << dataOption << endl;
+            start = std::chrono::steady_clock::now();
+            bpManager->bulk_load(data, 0.75);
+            end = std::chrono::steady_clock::now();
+            cout << "Finished bulk loading!" << endl;
+            totalTime = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+
+            if(_output) {
+                //pair<int, int> stats = bpManager->get_tree_stats();
+                cout << "---------- Test n= " << r << " ----------" << endl;
+                cout << "Bulk Insertion Case (" << dataOption << "): Insertion of " << records << " records into the B+ Tree took " << totalTime.count() << "s" << endl;
+                //cout << "Height after insertion: " << stats.first << "\n" << "Nodes in index: " << stats.second << endl;
+                cout << "---------- End of Test n= " << r << " ----------\n" << endl;
+            }
+
 
         }
 

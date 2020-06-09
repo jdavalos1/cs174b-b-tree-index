@@ -134,7 +134,6 @@ list<pair<int, int>>* BPTreeNode::recursive_search(const int& searchKey)
        }
        return data_entries;
     }
-    
     // Search for the index which the data is less than the value
     // i.e. intervals -> [4, 6, 8] then 2 will be < intervals[0]
     // and 5 < intervals[1] but > intervals[0] in this for loop
@@ -150,7 +149,7 @@ list<pair<int, int>>* BPTreeNode::recursive_search(const int& searchKey)
         }
     }
     // Recurse down to find the value needed based on index found
-    return this->recursive_search(searchKey);
+    return this->_children->at(interval)->recursive_search(searchKey);
 }
 
 /**
@@ -415,22 +414,44 @@ void BPTreeNode::print_tree()
  * @brief Uses a similar approach to print_tree to count the number of nodes and height of tree
  *
  */
-int height = 0, numberOfNodes = 1;
-std::pair<int, int> BPTreeNode::get_experiment_stats() {
-    if(_isLeaf) {
-        for(auto it = this->_data->begin(); it != this->_data->end(); it++) numberOfNodes++;
+int BPTreeNode::get_height() {
+    auto height = 0;
+    auto it = this;
+    while(!it->_isLeaf)
+    {
+        height++;
+        it = it->_children->front();
     }
-    else {
-        for(auto i = 0; i < _intervals->size(); i++) numberOfNodes++;
-        for(auto i = 0; i < _children->size(); i++) {
-            _children->at(i)->get_experiment_stats();
-            height++;
-        }
-    }
-
-    return std::pair<int, int>(height, numberOfNodes);
+    height++;
+    return height;
 }
-
+int BPTreeNode::get_number_data_pages()
+{
+    if(this->_isLeaf) return this->_data->size();
+    else
+    {
+        auto numNodes = 0;
+        for(auto it = this->_children->begin(); it != this->_children->end(); it++)
+        {
+            numNodes += (*it)->get_number_data_pages();
+        }
+        return numNodes;
+    }
+}
+int BPTreeNode::get_number_nodes()
+{
+    if(this->_isLeaf) return 1;
+    else
+    {
+        auto numNodes = 0;
+        for(auto it = this->_children->begin(); it != this->_children->end(); it++)
+        {
+            numNodes += 1 + (*it)->get_number_nodes();
+        }
+        return numNodes;
+    }
+    
+}
 BPTreeNode* BPTreeNode::insert_page(BPTreeNode *child)
 {
     if(this->_children == NULL || this->_children->empty()) 

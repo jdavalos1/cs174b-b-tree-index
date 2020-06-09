@@ -203,10 +203,11 @@ class UnitTests
             chrono::steady_clock::time_point start, end;
             chrono::duration<double> totalTime;
             list<pair<int, int>> data;
-
+            BPTreeManager *bpManager;
             // Begin testing for n = 50,000, 100,000... 1M
-            for (int i = 1; i < 21; i++) {
-                auto bpManager = new BPTreeManager(6, 100000, true);
+            for (int i = 10; i < 11; i++) {
+                bpManager = new BPTreeManager(6, 100000,
+                                            true, false, "dbtree"+to_string(i)+".db");
                 records = 50000 * i;
 
                 switch (option) {
@@ -247,6 +248,7 @@ class UnitTests
                     //cout << "Height after insertion: " << stats.first << "\n" << "Nodes in index: " << stats.second << endl;
                     cout << "---------- End of Test " << i << " ----------\n" << endl;
                 }
+                delete bpManager;
             }
 
         }

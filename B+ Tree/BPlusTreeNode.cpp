@@ -73,15 +73,19 @@ void BPTreeManager::bulk_load(list<pair<int,int>> data_entries, float fill_facto
     });
     auto pages = list<BPTreeNode*>();
     auto page_records = new list<pair<int, int>>();
+    auto counter = 0;
     for(auto data_entry : data_entries)
     {
         page_records->push_back(make_pair(data_entry.first, data_entry.second));
         if(page_records->size() >= fill_factor * (_fanout - 1))
         {
             pages.push_back(new BPTreeNode(true, _fanout, page_records, NULL, NULL));
+            counter += page_records->size();
             page_records = new list<pair<int, int>>();
         }
     }
+    if(counter != data_entries.size())
+        pages.push_back(new BPTreeNode(true, _fanout, page_records, NULL, NULL));
     for(auto it = pages.begin(); it != pages.end(); it++)
     {
         auto next = it;
@@ -90,6 +94,7 @@ void BPTreeManager::bulk_load(list<pair<int,int>> data_entries, float fill_facto
         auto newRoot = _root->insert_page(*it);
         if(newRoot != NULL) _root = newRoot;
     }
+    pages.back()->add_neighbor(NULL);
 }
 
 /**
@@ -362,6 +367,7 @@ void BPTreeNode::delete_all_nodes()
         delete this->_data;
         this->_data = NULL;
         this->_neighbor = NULL;
+        return;
     }
 
     for(int i = 0; i < _children->size(); i++)
@@ -425,19 +431,7 @@ int BPTreeNode::get_height() {
     height++;
     return height;
 }
-int BPTreeNode::get_number_data_pages()
-{
-    if(this->_isLeaf) return this->_data->size();
-    else
-    {
-        auto numNodes = 0;
-        for(auto it = this->_children->begin(); it != this->_children->end(); it++)
-        {
-            numNodes += (*it)->get_number_data_pages();
-        }
-        return numNodes;
-    }
-}
+
 int BPTreeNode::get_number_nodes()
 {
     if(this->_isLeaf) return 1;
@@ -468,6 +462,5 @@ BPTreeNode* BPTreeNode::insert_page(BPTreeNode *child)
     }
     it->_intervals->push_back(it->_children->back()->_data->back().first);
     it->_children->push_back(child);
-    //it->add_child(child->_data->front().first, child);
     return it->recursive_split();
 }

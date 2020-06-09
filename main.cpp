@@ -14,5 +14,5 @@ int main(int argc, char * argv[])
     //unittests.testBulkLoad15ItemsInOrder_ReturnShouldContainValues1_15();
     //unittests.testTreeStatsFunction_ReturnShouldHaveHeight2_Nodes10();
     //unittests.testDirectInsertExperiment(1);
-    unittests.testBulkLoadingInsertExperiment(0, 112);
+    unittests.testBulkLoadingInsertExperiment(0);
 }

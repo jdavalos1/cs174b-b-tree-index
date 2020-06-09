@@ -150,10 +150,7 @@ namespace BPTree {
             void bulk_load(list<pair<int,int>> data_entries, float fill_factor=1.0);
             // Uses a similar approach to print tree in order to get tree height and # of nodes
             pair<int, int> get_tree_stats() {
-                auto values = _root->obtain_all_pages();
-                
-                //for(auto it = values->begin(); it != values->end(); it++)
-                  //  cout << it->first << " " << it->second << endl;
+
                 return make_pair(_root->get_height(), _root->get_number_nodes());
             }
     };

@@ -73,7 +73,6 @@ void BPTreeManager::bulk_load(list<pair<int,int>> data_entries, float fill_facto
     });
     auto pages = list<BPTreeNode*>();
     auto page_records = new list<pair<int, int>>();
-    int counter = 0;
     for(auto data_entry : data_entries)
     {
         page_records->push_back(make_pair(data_entry.first, data_entry.second));
@@ -442,7 +441,12 @@ BPTreeNode* BPTreeNode::insert_page(BPTreeNode *child)
     }
 
     auto it = this;
-    while(!it->_children->back()->_isLeaf) it = _children->back();
-    it->add_child(child->_data->front().first, child);
+    while(!it->_children->back()->_isLeaf) 
+    {
+        it = it->_children->back();
+    }
+    it->_intervals->push_back(it->_children->back()->_data->back().first);
+    it->_children->push_back(child);
+    //it->add_child(child->_data->front().first, child);
     return it->recursive_split();
 }

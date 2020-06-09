@@ -92,7 +92,8 @@ namespace BPTree {
             void print_tree();
             BPTreeNode* insert_page(BPTreeNode*);
             void add_neighbor(BPTreeNode *node) {this->_neighbor = node;}
-            pair<int, int> get_experiment_stats();
+            int get_height();
+            int get_number_nodes();
     };
     
     class BPTreeManager
@@ -149,7 +150,8 @@ namespace BPTree {
             void bulk_load(list<pair<int,int>> data_entries, float fill_factor=1.0);
             // Uses a similar approach to print tree in order to get tree height and # of nodes
             pair<int, int> get_tree_stats() {
-                _root->get_experiment_stats();
+
+                return make_pair(_root->get_height(), _root->get_number_nodes());
             }
     };
 }

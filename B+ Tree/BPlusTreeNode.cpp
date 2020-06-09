@@ -73,15 +73,19 @@ void BPTreeManager::bulk_load(list<pair<int,int>> data_entries, float fill_facto
     });
     auto pages = list<BPTreeNode*>();
     auto page_records = new list<pair<int, int>>();
+    auto counter = 0;
     for(auto data_entry : data_entries)
     {
         page_records->push_back(make_pair(data_entry.first, data_entry.second));
         if(page_records->size() >= fill_factor * (_fanout - 1))
         {
             pages.push_back(new BPTreeNode(true, _fanout, page_records, NULL, NULL));
+            counter += page_records->size();
             page_records = new list<pair<int, int>>();
         }
     }
+    if(counter != data_entries.size())
+        pages.push_back(new BPTreeNode(true, _fanout, page_records, NULL, NULL));
     for(auto it = pages.begin(); it != pages.end(); it++)
     {
         auto next = it;
@@ -90,6 +94,7 @@ void BPTreeManager::bulk_load(list<pair<int,int>> data_entries, float fill_facto
         auto newRoot = _root->insert_page(*it);
         if(newRoot != NULL) _root = newRoot;
     }
+    pages.back()->add_neighbor(NULL);
 }
 
 /**
@@ -134,7 +139,6 @@ list<pair<int, int>>* BPTreeNode::recursive_search(const int& searchKey)
        }
        return data_entries;
     }
-    
     // Search for the index which the data is less than the value
     // i.e. intervals -> [4, 6, 8] then 2 will be < intervals[0]
     // and 5 < intervals[1] but > intervals[0] in this for loop
@@ -150,7 +154,7 @@ list<pair<int, int>>* BPTreeNode::recursive_search(const int& searchKey)
         }
     }
     // Recurse down to find the value needed based on index found
-    return this->recursive_search(searchKey);
+    return this->_children->at(interval)->recursive_search(searchKey);
 }
 
 /**
@@ -363,6 +367,7 @@ void BPTreeNode::delete_all_nodes()
         delete this->_data;
         this->_data = NULL;
         this->_neighbor = NULL;
+        return;
     }
 
     for(int i = 0; i < _children->size(); i++)
@@ -415,22 +420,32 @@ void BPTreeNode::print_tree()
  * @brief Uses a similar approach to print_tree to count the number of nodes and height of tree
  *
  */
-int height = 0, numberOfNodes = 1;
-std::pair<int, int> BPTreeNode::get_experiment_stats() {
-    if(_isLeaf) {
-        for(auto it = this->_data->begin(); it != this->_data->end(); it++) numberOfNodes++;
+int BPTreeNode::get_height() {
+    auto height = 0;
+    auto it = this;
+    while(!it->_isLeaf)
+    {
+        height++;
+        it = it->_children->front();
     }
-    else {
-        for(auto i = 0; i < _intervals->size(); i++) numberOfNodes++;
-        for(auto i = 0; i < _children->size(); i++) {
-            _children->at(i)->get_experiment_stats();
-            height++;
-        }
-    }
-
-    return std::pair<int, int>(height, numberOfNodes);
+    height++;
+    return height;
 }
 
+int BPTreeNode::get_number_nodes()
+{
+    if(this->_isLeaf) return 1;
+    else
+    {
+        auto numNodes = 0;
+        for(auto it = this->_children->begin(); it != this->_children->end(); it++)
+        {
+            numNodes += 1 + (*it)->get_number_nodes();
+        }
+        return numNodes;
+    }
+    
+}
 BPTreeNode* BPTreeNode::insert_page(BPTreeNode *child)
 {
     if(this->_children == NULL || this->_children->empty()) 
@@ -447,6 +462,5 @@ BPTreeNode* BPTreeNode::insert_page(BPTreeNode *child)
     }
     it->_intervals->push_back(it->_children->back()->_data->back().first);
     it->_children->push_back(child);
-    //it->add_child(child->_data->front().first, child);
     return it->recursive_split();
 }

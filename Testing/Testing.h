@@ -115,13 +115,16 @@ class UnitTests
 
         void testBulkLoad15ItemsInOrder_ReturnShouldContainValues1_15()
         {
-            auto bpManager = new BPTreeManager(3,100, true);
+            auto bpManager = new BPTreeManager(5,100, true);
             auto dataset = list<pair<int, int>>();
             for(int i = 0; i < 15; i++)
                 dataset.push_back(make_pair(i, i));
             bpManager->bulk_load(dataset);
 
-            bpManager->print();
+            auto stats = bpManager->get_tree_stats();
+
+            cout << "Height: " << stats.first << "\nNumber of Nodes: " << stats.second << endl;
+            bpManager->serialize("dbtree.db");
         }
 
         void testBulkLoadFromAFile_ReturnShouldContainValues1_10() {
@@ -200,10 +203,11 @@ class UnitTests
             chrono::steady_clock::time_point start, end;
             chrono::duration<double> totalTime;
             list<pair<int, int>> data;
-            auto bpManager = new BPTreeManager(6, 100000, true);
-
+            BPTreeManager *bpManager;
             // Begin testing for n = 50,000, 100,000... 1M
-            for (int i = 1; i < 21; i++) {
+            for (int i = 10; i < 11; i++) {
+                bpManager = new BPTreeManager(6, 100000,
+                                            true, false, "dbtree"+to_string(i)+".db");
                 records = 50000 * i;
 
                 switch (option) {
@@ -231,6 +235,9 @@ class UnitTests
                 start = std::chrono::steady_clock::now();
                 bpManager->bulk_load(data);
                 end = std::chrono::steady_clock::now();
+                std::cout << "done bulk now searching\n";
+                auto v = bpManager->search(1);
+                std::cout << v->empty() << std::endl;
                 cout << "Finished bulk loading!" << endl;
                 totalTime = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 
@@ -241,6 +248,7 @@ class UnitTests
                     //cout << "Height after insertion: " << stats.first << "\n" << "Nodes in index: " << stats.second << endl;
                     cout << "---------- End of Test " << i << " ----------\n" << endl;
                 }
+                delete bpManager;
             }
 
         }

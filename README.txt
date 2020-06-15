@@ -9,3 +9,5 @@ Purpose of Each File:
     - Datagen.h: Header file for declaraing the functions for data generation.
     - Datagen.cpp: File containing all definitions of data generation.
     - Main.cpp: Simple file to run a couple of tests needed for the experiment.
+
+Note: A recent commit has caused a bug in the B+ Tree insert to create empty data intervals. We will be looking into this.
